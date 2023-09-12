@@ -18,13 +18,6 @@ const sequelize_1 = require("sequelize");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT;
-// const sequelize = new Sequelize({
-//   dialect: 'postgres', // Le dialecte dépend de votre base de données
-//   host: 'localhost',    // L'adresse de votre serveur de base de données
-//   username: 'Darref',
-//   password: process.env.PWD,
-//   database: 'jordaBDD',
-// });
 const sequelize = new sequelize_1.Sequelize({
     dialect: "sqlite",
     storage: "./db.sqlite",
@@ -34,6 +27,11 @@ const Todo = sequelize.define('Todo', {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
+    status: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false
+    },
+}, { timestamps: false,
 });
 funcSync();
 function funcSync() {
@@ -42,33 +40,75 @@ function funcSync() {
     });
 }
 // Fonction pour ajouter une entrée "testTodoValue" dans la table Todo
-function addTestTodo(valueTodo) {
+function addTodo(valueTodo, valueStatus) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            // Cela crée automatiquement la table si elle n'existe pas encore
-            yield Todo.create({
-                value: valueTodo,
-            });
-        }
-        catch (error) {
-            console.error('Erreur lors de l\'ajout de l\'entrée dans la table Todo :', error);
-        }
-        finally {
-            yield sequelize.close(); // N'oubliez pas de fermer la connexion lorsque vous avez terminé
-        }
+        // Cela crée automatiquement la table si elle n'existe pas encore
+        yield Todo.create({
+            value: valueTodo,
+            status: valueStatus
+        });
     });
 }
-app.get('/addSentenceToBDD/:sentance', (req, res) => {
+//
+function updateTodo(valueTodo, valueStatus) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield Todo.update({ status: valueStatus }, {
+            where: {
+                value: valueTodo.toString(),
+            },
+        });
+    });
+}
+app.get('/addSentenceToBDD/:sentance/:status', (req, res) => {
     // Récupérez les données du corps de la requête
     const donnees = req.params.sentance;
+    const status = Boolean(req.params.status);
     //
-    addTestTodo(req.params.sentance);
-    // ...
+    addTodo(donnees, status);
     // Faites ici ce que vous souhaitez avec les données reçues
     console.log('Données reçues :', donnees);
-    // Réponse à la requête
-    res.status(200).json({ message: 'Données reçues avec succès' });
+    // Réponse à la requête 
+    res.status(200).json({ message: 'Données créées avec succès' });
 });
+app.get('/updateSentence/:sentance/:status', (req, res) => {
+    // Récupérez les données du corps de la requête
+    const donnees = req.params.sentance;
+    const status = req.params.status;
+    //
+    updateTodo(donnees, status);
+    // Faites ici ce que vous souhaitez avec les données reçues
+    console.log('Données reçues :', donnees, " ", status);
+    // Réponse à la requête
+    res.status(200).json({ message: 'Données updated avec succès' });
+});
+app.get('/removeAll', (req, res) => {
+    Todo.destroy({
+        where: {},
+        truncate: true
+    });
+    // Réponse à la requête
+    res.status(200).json({ message: 'Données updated avec succès' });
+});
+function findAllTodos() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const todos = yield Todo.findAll();
+        return yield todos;
+    });
+}
+app.get('/getAll', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let variabb = yield findAllTodos();
+    // Réponse à la requête
+    if (variabb.length > 0) {
+        res.status(200).json(variabb);
+    }
+}));
+app.get('/remove/:valueTodo', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield Todo.destroy({
+        where: {
+            value: req.params.valueTodo.toString()
+        },
+    });
+}));
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
