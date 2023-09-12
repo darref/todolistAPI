@@ -109,6 +109,11 @@ app.get('/remove/:valueTodo', (req, res) => __awaiter(void 0, void 0, void 0, fu
         },
     });
 }));
+
+app.get('/' , (req,res)=>
+{
+    res.status(200)
+})
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
